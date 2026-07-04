@@ -1,136 +1,236 @@
-import { useEffect, useState } from "react";
+import ImagePreview from "../components/ImagePreview";
+import { useState, useEffect, useRef } from "react";
 import { db, auth } from "../firebase";
 import { Navigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+
 import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  query,
-  orderBy,
-  onSnapshot,
+    collection,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
+    onSnapshot,
+    deleteDoc,
+    doc,
 } from "firebase/firestore";
 
 import "../styles/Chat.css";
 
 function Chat() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+    const [message, setMessage] = useState("");
+    const [messages, setMessages] = useState([]);
+    const [image, setImage] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "messages"),
-      orderBy("createdAt", "asc")
-    );
+    const messagesEndRef = useRef(null);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-      );
-    });
+    useEffect(() => {
+        const q = query(
+            collection(db, "messages"),
+            orderBy("createdAt", "asc")
+        );
 
-    return () => unsubscribe();
-  }, []);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setMessages(
+                snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }))
+            );
+        });
 
-  const sendMessage = async () => {
-    if (message.trim() === "") return;
+        return () => unsubscribe();
+    }, []);
 
-    try {
-      await addDoc(collection(db, "messages"), {
-        text: message,
-        uid: auth.currentUser.uid,
-        name: auth.currentUser.displayName,
-        photo: auth.currentUser.photoURL,
-        createdAt: serverTimestamp(),
-      });
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+        });
+    }, [messages]);
 
-      setMessage("");
-    } catch (error) {
-      console.log(error);
+    if (!auth.currentUser) {
+        return <Navigate to="/" />;
     }
-  };
+    const sendMessage = async () => {
+        if (message.trim() === "" && !image) return;
 
-  const logout = async () => {
-    await signOut(auth);
-    window.location.href = "/";
-  };
+        setLoading(true);
 
-  return (
-    <div className="chat-container">
+        try {
+            let imageUrl = "";
 
-      <div className="chat-header">
+            if (image) {
+                const data = new FormData();
+                data.append("file", image);
+                data.append("upload_preset", "chat_upload");
 
-        <div className="header-left">
-          <img
-            src={auth.currentUser.photoURL}
-            alt=""
-            className="profile"
-          />
+                const res = await fetch(
+                    "https://api.cloudinary.com/v1_1/tdlhklkz/image/upload",
+                    {
+                        method: "POST",
+                        body: data,
+                    }
+                );
 
-          <h3>{auth.currentUser.displayName}</h3>
-        </div>
-
-        <button onClick={logout}>
-          Logout
-        </button>
-
-      </div>
-
-      <div className="messages">
-
-        {messages.map((msg) => (
-
-          <div
-            key={msg.id}
-            className={
-              msg.uid === auth.currentUser.uid
-                ? "my-message"
-                : "other-message"
+                const file = await res.json();
+                imageUrl = file.secure_url;
             }
-          >
 
-            <img
-              src={msg.photo}
-              alt=""
-              className="message-photo"
-            />
+            await addDoc(collection(db, "messages"), {
+                text: message,
+                image: imageUrl,
+                uid: auth.currentUser.uid,
+                name: auth.currentUser.displayName,
+                photo: auth.currentUser.photoURL,
+                createdAt: serverTimestamp(),
+            });
 
-            <div className="message-box">
-              <h4>{msg.name}</h4>
-              <p>{msg.text}</p>
+            setMessage("");
+            setImage(null);
+        } catch (error) {
+            console.error(error);
+            alert("Failed to send message.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    const deleteMessage = async (id) => {
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this message?"
+        );
+
+        if (!confirmDelete) return;
+
+        try {
+            await deleteDoc(doc(db, "messages", id));
+        } catch (error) {
+            console.error(error);
+            alert("Failed to delete message.");
+        }
+    };
+    const logout = async () => {
+        await signOut(auth);
+    };
+    return (
+        <div className="chat-container">
+
+            <div className="chat-header">
+                <div className="user-info">
+                    <img
+                        src={auth.currentUser.photoURL}
+                        alt="profile"
+                        className="avatar"
+                    />
+                    <h2>{auth.currentUser.displayName}</h2>
+                </div>
+
+                <button className="logout-btn" onClick={logout}>
+                    Logout
+                </button>
             </div>
 
-          </div>
+            <div className="messages">
 
-        ))}
+                {messages.map((msg) => (
+                    <div
+                        key={msg.id}
+                        className={
+                            msg.uid === auth.currentUser.uid
+                                ? "message own"
+                                : "message"
+                        }
+                    >
 
-      </div>
+                        <img
+                            src={msg.photo}
+                            alt="profile"
+                            className="avatar"
+                        />
 
-      <div className="input-box">
+                        <div className="bubble">
 
-        <input
-          type="text"
-          placeholder="Type a message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              sendMessage();
-            }
-          }}
-        />
+                            <h4>{msg.name}</h4>
 
-        <button onClick={sendMessage}>
-          Send
-        </button>
+                            {msg.text && (
+                                <p>{msg.text}</p>
+                            )}
+                            <p className="message-time">
+                                {msg.createdAt?.toDate
+                                    ? msg.createdAt.toDate().toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })
+                                    : ""}
+                            </p>
 
-      </div>
+                            {msg.image && (
+                                <img
+                                    src={msg.image}
+                                    alt="chat"
+                                    className="chat-image"
+                                />
+                            )}
+                            {msg.uid === auth.currentUser.uid && (
+                                <button
+                                    className="delete-btn"
+                                    onClick={() => deleteMessage(msg.id)}
+                                >
+                                    🗑 Delete
+                                </button>
+                            )}
 
-    </div>
-  );
+                        </div>
+
+                    </div>
+
+                ))}
+                <div ref={messagesEndRef}></div>
+            </div>
+            {image && (
+                <ImagePreview
+                    image={image}
+                    setImage={setImage}
+                />
+            )}
+
+            <div className="chat-input">
+
+                <input
+                    type="text"
+                    placeholder="Type a message..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            sendMessage();
+                        }
+                    }}
+                />
+
+                <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => setImage(e.target.files[0])}
+                />
+
+                <label htmlFor="image-upload" className="upload-btn">
+                    📎
+                </label>
+
+                <button
+                    onClick={sendMessage}
+                    disabled={loading}
+                >
+                    {loading ? "Uploading..." : "Send"}
+                </button>
+
+            </div>
+
+        </div>
+    );
 }
 
 export default Chat;
