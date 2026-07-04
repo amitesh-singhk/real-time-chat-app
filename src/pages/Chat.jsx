@@ -1,3 +1,5 @@
+import EmojiPicker from "emoji-picker-react";
+import { Smile } from "lucide-react";
 import ImagePreview from "../components/ImagePreview";
 import { useState, useEffect, useRef } from "react";
 import { db, auth } from "../firebase";
@@ -12,6 +14,7 @@ import {
     orderBy,
     onSnapshot,
     deleteDoc,
+    updateDoc,
     doc,
 } from "firebase/firestore";
 
@@ -22,6 +25,10 @@ function Chat() {
     const [messages, setMessages] = useState([]);
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [showEmoji, setShowEmoji] = useState(false);
+
+    const [editingId, setEditingId] = useState(null);
+    const [editText, setEditText] = useState("");
 
     const messagesEndRef = useRef(null);
 
@@ -52,6 +59,26 @@ function Chat() {
     if (!auth.currentUser) {
         return <Navigate to="/" />;
     }
+    const onEmojiClick = (emojiData) => {
+        setMessage((prev) => prev + emojiData.emoji);
+        setShowEmoji(false);
+    };
+
+    const updateMessage = async () => {
+        if (editText.trim() === "") return;
+
+        try {
+            await updateDoc(doc(db, "messages", editingId), {
+                text: editText,
+            });
+
+            setEditingId(null);
+            setEditText("");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to update message.");
+        }
+    };
     const sendMessage = async () => {
         if (message.trim() === "" && !image) return;
 
@@ -172,12 +199,24 @@ function Chat() {
                                 />
                             )}
                             {msg.uid === auth.currentUser.uid && (
-                                <button
-                                    className="delete-btn"
-                                    onClick={() => deleteMessage(msg.id)}
-                                >
-                                    🗑 Delete
-                                </button>
+                                <>
+                                    <button
+                                        className="edit-btn"
+                                        onClick={() => {
+                                            setEditingId(msg.id);
+                                            setEditText(msg.text);
+                                        }}
+                                    >
+                                        ✏️ Edit
+                                    </button>
+
+                                    <button
+                                        className="delete-btn"
+                                        onClick={() => deleteMessage(msg.id)}
+                                    >
+                                        🗑 Delete
+                                    </button>
+                                </>
                             )}
 
                         </div>
@@ -199,14 +238,41 @@ function Chat() {
                 <input
                     type="text"
                     placeholder="Type a message..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+
+                    value={editingId ? editText : message}
+
+                    onChange={(e) => {
+                        if (editingId) {
+                            setEditText(e.target.value);
+                        } else {
+                            setMessage(e.target.value);
+                        }
+                    }}
                     onKeyDown={(e) => {
                         if (e.key === "Enter") {
                             sendMessage();
                         }
                     }}
                 />
+
+                <div className="emoji-container">
+                    <button
+                        className="emoji-btn"
+                        onClick={() => setShowEmoji(!showEmoji)}
+                    >
+                        <Smile size={22} />
+                    </button>
+
+                    {showEmoji && (
+                        <div className="emoji-picker">
+                            <EmojiPicker
+                                onEmojiClick={onEmojiClick}
+                                width={320}
+                                height={400}
+                            />
+                        </div>
+                    )}
+                </div>
 
                 <input
                     id="image-upload"
@@ -221,11 +287,27 @@ function Chat() {
                 </label>
 
                 <button
-                    onClick={sendMessage}
+
+                    onClick={editingId ? updateMessage : sendMessage}
                     disabled={loading}
                 >
-                    {loading ? "Uploading..." : "Send"}
+                    {editingId
+                        ? "Save"
+                        : loading
+                            ? "Uploading..."
+                            : "Send"}
                 </button>
+                {editingId && (
+                    <button
+                        className="cancel-btn"
+                        onClick={() => {
+                            setEditingId(null);
+                            setEditText("");
+                        }}
+                    >
+                        Cancel
+                    </button>
+                )}
 
             </div>
 
