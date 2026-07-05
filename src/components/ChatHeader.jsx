@@ -1,6 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
-function ChatHeader({ user, onLogout }) {
+function ChatHeader({
+  user,
+  onLogout,
+  typingUser,
+  isTyping,
+}) {
+  const [userStatus, setUserStatus] = useState(null);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "users", user.uid),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setUserStatus(docSnap.data());
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
   return (
     <div className="chat-header">
       <div className="user-info">
@@ -12,7 +35,21 @@ function ChatHeader({ user, onLogout }) {
 
         <div>
           <h2>{user.displayName}</h2>
-          <p className="status">🟢 Online</p>
+          <p className="status">
+            {isTyping && typingUser ? (
+              <>⌨️ {typingUser.name} is typing...</>
+            ) : userStatus?.online ? (
+              "🟢 Online"
+            ) : (
+              `⚫ Last seen ${userStatus?.lastSeen?.toDate
+                ? userStatus.lastSeen.toDate().toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+                : ""
+              }`
+            )}
+          </p>
         </div>
       </div>
 

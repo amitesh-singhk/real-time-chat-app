@@ -1,4 +1,5 @@
 import EmojiPicker from "emoji-picker-react";
+import ChatHeader from "../components/ChatHeader";
 import { Smile } from "lucide-react";
 import ImagePreview from "../components/ImagePreview";
 import { useState, useEffect, useRef } from "react";
@@ -15,7 +16,9 @@ import {
     onSnapshot,
     deleteDoc,
     updateDoc,
+    setDoc,
     doc,
+    where,
 } from "firebase/firestore";
 
 import "../styles/Chat.css";
@@ -25,12 +28,41 @@ function Chat() {
     const [messages, setMessages] = useState([]);
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
+    const [typingUser, setTypingUser] = useState(null);
     const [showEmoji, setShowEmoji] = useState(false);
 
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState("");
 
     const messagesEndRef = useRef(null);
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const userRef = doc(db, "users", auth.currentUser.uid);
+
+        setDoc(
+            userRef,
+            {
+                uid: auth.currentUser.uid,
+                name: auth.currentUser.displayName,
+                photo: auth.currentUser.photoURL,
+                online: true,
+            },
+            { merge: true }
+        );
+
+        return () => {
+            setDoc(
+                userRef,
+                {
+                    online: false,
+                    lastSeen: serverTimestamp(),
+                },
+                { merge: true }
+            );
+        };
+    }, []);
 
     useEffect(() => {
         const q = query(
@@ -55,6 +87,30 @@ function Chat() {
             behavior: "smooth",
         });
     }, [messages]);
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const q = query(
+            collection(db, "users"),
+            where("uid", "!=", auth.currentUser.uid)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const users = snapshot.docs.map((doc) => doc.data());
+
+            const typing = users.find((user) => user.typing);
+
+            if (typing) {
+                setTypingUser(typing);
+                setIsTyping(true);
+            } else {
+                setTypingUser(null);
+                setIsTyping(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     if (!auth.currentUser) {
         return <Navigate to="/" />;
@@ -78,6 +134,19 @@ function Chat() {
             console.error(error);
             alert("Failed to update message.");
         }
+    };
+    const handleTyping = async (value) => {
+        setMessage(value);
+
+        if (!auth.currentUser) return;
+
+        await setDoc(
+            doc(db, "users", auth.currentUser.uid),
+            {
+                typing: value.length > 0,
+            },
+            { merge: true }
+        );
     };
     const sendMessage = async () => {
         if (message.trim() === "" && !image) return;
@@ -115,6 +184,13 @@ function Chat() {
 
             setMessage("");
             setImage(null);
+            await setDoc(
+                doc(db, "users", auth.currentUser.uid),
+                {
+                    typing: false,
+                },
+                { merge: true }
+            );
         } catch (error) {
             console.error(error);
             alert("Failed to send message.");
@@ -137,26 +213,27 @@ function Chat() {
         }
     };
     const logout = async () => {
+        await setDoc(
+            doc(db, "users", auth.currentUser.uid),
+            {
+                online: false,
+                typing: false,
+                lastSeen: serverTimestamp(),
+            },
+            { merge: true }
+        );
+
         await signOut(auth);
+
     };
     return (
         <div className="chat-container">
-
-            <div className="chat-header">
-                <div className="user-info">
-                    <img
-                        src={auth.currentUser.photoURL}
-                        alt="profile"
-                        className="avatar"
-                    />
-                    <h2>{auth.currentUser.displayName}</h2>
-                </div>
-
-                <button className="logout-btn" onClick={logout}>
-                    Logout
-                </button>
-            </div>
-
+            <ChatHeader
+                user={auth.currentUser}
+                onLogout={logout}
+                typingUser={typingUser}
+                isTyping={isTyping}
+            />
             <div className="messages">
 
                 {messages.map((msg) => (
@@ -226,12 +303,14 @@ function Chat() {
                 ))}
                 <div ref={messagesEndRef}></div>
             </div>
-            {image && (
-                <ImagePreview
-                    image={image}
-                    setImage={setImage}
-                />
-            )}
+            {
+                image && (
+                    <ImagePreview
+                        image={image}
+                        setImage={setImage}
+                    />
+                )
+            }
 
             <div className="chat-input">
 
@@ -245,7 +324,7 @@ function Chat() {
                         if (editingId) {
                             setEditText(e.target.value);
                         } else {
-                            setMessage(e.target.value);
+                            handleTyping(e.target.value);
                         }
                     }}
                     onKeyDown={(e) => {
@@ -311,7 +390,7 @@ function Chat() {
 
             </div>
 
-        </div>
+        </div >
     );
 }
 
