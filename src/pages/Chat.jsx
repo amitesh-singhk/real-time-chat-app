@@ -1,3 +1,4 @@
+import UserList from "../components/UserList";
 import EmojiPicker from "emoji-picker-react";
 import ChatHeader from "../components/ChatHeader";
 import { Smile } from "lucide-react";
@@ -31,6 +32,12 @@ function Chat() {
     const [isTyping, setIsTyping] = useState(false);
     const [typingUser, setTypingUser] = useState(null);
     const [showEmoji, setShowEmoji] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const chatId =
+        selectedUser && auth.currentUser
+            ? [auth.currentUser.uid, selectedUser.uid].sort().join("_")
+            : null;
 
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState("");
@@ -65,8 +72,13 @@ function Chat() {
     }, []);
 
     useEffect(() => {
+        if (!chatId) {
+            setMessages([]);
+            return;
+        }
+
         const q = query(
-            collection(db, "messages"),
+            collection(db, "chats", chatId, "messages"),
             orderBy("createdAt", "asc")
         );
 
@@ -80,7 +92,7 @@ function Chat() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [chatId]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({
@@ -111,6 +123,22 @@ function Chat() {
 
         return () => unsubscribe();
     }, []);
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const q = query(
+            collection(db, "users"),
+            where("uid", "!=", auth.currentUser.uid)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const allUsers = snapshot.docs.map((doc) => doc.data());
+
+            setUsers(allUsers);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     if (!auth.currentUser) {
         return <Navigate to="/" />;
@@ -124,9 +152,11 @@ function Chat() {
         if (editText.trim() === "") return;
 
         try {
-            await updateDoc(doc(db, "messages", editingId), {
-                text: editText,
-            });
+            await updateDoc(
+                doc(db, "chats", chatId, "messages", editingId),
+                {
+                    text: editText,
+                });
 
             setEditingId(null);
             setEditText("");
@@ -150,7 +180,10 @@ function Chat() {
     };
     const sendMessage = async () => {
         if (message.trim() === "" && !image) return;
-
+        if (!selectedUser) {
+            alert("Please select a user first.");
+            return;
+        }
         setLoading(true);
 
         try {
@@ -173,12 +206,14 @@ function Chat() {
                 imageUrl = file.secure_url;
             }
 
-            await addDoc(collection(db, "messages"), {
+            await addDoc(collection(db, "chats", chatId, "messages"), {
                 text: message,
                 image: imageUrl,
                 uid: auth.currentUser.uid,
                 name: auth.currentUser.displayName,
                 photo: auth.currentUser.photoURL,
+                senderId: auth.currentUser.uid,
+                receiverId: selectedUser.uid,
                 createdAt: serverTimestamp(),
             });
 
@@ -206,7 +241,9 @@ function Chat() {
         if (!confirmDelete) return;
 
         try {
-            await deleteDoc(doc(db, "messages", id));
+            await deleteDoc(
+                doc(db, "chats", chatId, "messages", id)
+            );
         } catch (error) {
             console.error(error);
             alert("Failed to delete message.");
@@ -229,80 +266,112 @@ function Chat() {
     return (
         <div className="chat-container">
             <ChatHeader
+
                 user={auth.currentUser}
                 onLogout={logout}
                 typingUser={typingUser}
                 isTyping={isTyping}
             />
-            <div className="messages">
 
-                {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={
-                            msg.uid === auth.currentUser.uid
-                                ? "message own"
-                                : "message"
-                        }
-                    >
+            <div className="chat-body">
 
-                        <img
-                            src={msg.photo}
-                            alt="profile"
-                            className="avatar"
-                        />
+                <UserList
+                    users={users}
+                    selectedUser={selectedUser}
+                    setSelectedUser={setSelectedUser}
+                />
 
-                        <div className="bubble">
 
-                            <h4>{msg.name}</h4>
+                <div className="messages">
 
-                            {msg.text && (
-                                <p>{msg.text}</p>
-                            )}
-                            <p className="message-time">
-                                {msg.createdAt?.toDate
-                                    ? msg.createdAt.toDate().toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })
-                                    : ""}
-                            </p>
-
-                            {msg.image && (
-                                <img
-                                    src={msg.image}
-                                    alt="chat"
-                                    className="chat-image"
-                                />
-                            )}
-                            {msg.uid === auth.currentUser.uid && (
-                                <>
-                                    <button
-                                        className="edit-btn"
-                                        onClick={() => {
-                                            setEditingId(msg.id);
-                                            setEditText(msg.text);
-                                        }}
-                                    >
-                                        ✏️ Edit
-                                    </button>
-
-                                    <button
-                                        className="delete-btn"
-                                        onClick={() => deleteMessage(msg.id)}
-                                    >
-                                        🗑 Delete
-                                    </button>
-                                </>
-                            )}
-
+                    {!selectedUser ? (
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                height: "100%",
+                                color: "#666",
+                                fontSize: "20px",
+                                fontWeight: "600",
+                            }}
+                        >
+                            Select a user to start chatting 💬
                         </div>
+                    ) :
 
-                    </div>
+                        messages.map((msg) => (
 
-                ))}
-                <div ref={messagesEndRef}></div>
-            </div>
+                            <div
+                                key={msg.id}
+                                className={
+                                    msg.uid === auth.currentUser.uid
+                                        ? "message own"
+                                        : "message"
+                                }
+                            >
+
+                                <img
+                                    src={msg.photo}
+                                    alt="profile"
+                                    className="avatar"
+                                />
+
+                                <div className="bubble">
+
+                                    <h4>{msg.name}</h4>
+
+                                    {msg.text && (
+                                        <p>{msg.text}</p>
+                                    )}
+                                    <p className="message-time">
+                                        {msg.createdAt?.toDate
+                                            ? msg.createdAt.toDate().toLocaleTimeString([], {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })
+                                            : ""}
+                                    </p>
+
+                                    {msg.image && (
+                                        <img
+                                            src={msg.image}
+                                            alt="chat"
+                                            className="chat-image"
+                                        />
+                                    )}
+                                    {msg.uid === auth.currentUser.uid && (
+                                        <>
+                                            <button
+                                                className="edit-btn"
+                                                onClick={() => {
+                                                    setEditingId(msg.id);
+                                                    setEditText(msg.text);
+                                                }}
+                                            >
+                                                ✏️ Edit
+                                            </button>
+
+                                            <button
+                                                className="delete-btn"
+                                                onClick={() => deleteMessage(msg.id)}
+                                            >
+                                                🗑 Delete
+                                            </button>
+                                        </>
+                                    )}
+
+                                </div>
+
+                            </div>
+
+                        ))
+                    }
+                    < div ref={messagesEndRef}></div>
+                </div> {/* messages */}
+
+            </div> {/* chat-body */}
+
             {
                 image && (
                     <ImagePreview
