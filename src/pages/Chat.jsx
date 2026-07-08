@@ -1,3 +1,4 @@
+import { Oval } from "react-loader-spinner";
 import UserList from "../components/UserList";
 import EmojiPicker from "emoji-picker-react";
 import ChatHeader from "../components/ChatHeader";
@@ -29,6 +30,7 @@ function Chat() {
     const [messages, setMessages] = useState([]);
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [chatLoading, setChatLoading] = useState(true);
     const [isTyping, setIsTyping] = useState(false);
     const [typingUser, setTypingUser] = useState(null);
     const [showEmoji, setShowEmoji] = useState(false);
@@ -89,6 +91,8 @@ function Chat() {
                     ...doc.data(),
                 }))
             );
+
+            setChatLoading(false);
         });
 
         return () => unsubscribe();
@@ -283,8 +287,21 @@ function Chat() {
 
 
                 <div className="messages">
-
-                    {!selectedUser ? (
+                    {chatLoading ? (
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                height: "100%",
+                                fontSize: "20px",
+                                color: "#666",
+                                fontWeight: "600",
+                            }}
+                        >
+                            Loading chat...
+                        </div>
+                    ) : !selectedUser ? (
                         <div
                             style={{
                                 display: "flex",

@@ -15,14 +15,20 @@ function Login() {
             const user = result.user;
 
             // Save user in Firestore
-            await setDoc(doc(db, "users", user.uid), {
-                uid: user.uid,
-                name: user.displayName,
-                email: user.email,
-                photo: user.photoURL,
-                createdAt: new Date(),
-            });
-
+            await setDoc(
+                doc(db, "users", user.uid),
+                {
+                    uid: user.uid,
+                    name: user.displayName,
+                    email: user.email,
+                    photo: user.photoURL,
+                    online: true,
+                    typing: false,
+                    lastSeen: new Date(),
+                    createdAt: new Date(),
+                },
+                { merge: true }
+            );
             console.log("User Saved:", user);
 
             // Redirect to Chat Page

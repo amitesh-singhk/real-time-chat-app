@@ -28,11 +28,20 @@ function ChatHeader({
     <div className="chat-header">
       <div className="user-info">
         <img
-          src={user.photoURL}
+          src={
+            user.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              user.displayName
+            )}`
+          }
           alt={user.displayName}
           className="avatar"
+          onError={(e) => {
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              user.displayName
+            )}`;
+          }}
         />
-
         <div>
           <h2>{user.displayName}</h2>
           <p className="status">
