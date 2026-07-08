@@ -29,6 +29,7 @@ function Chat() {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [image, setImage] = useState(null);
+    const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(false);
     const [chatLoading, setChatLoading] = useState(true);
     const [isTyping, setIsTyping] = useState(false);
@@ -284,108 +285,123 @@ function Chat() {
                     selectedUser={selectedUser}
                     setSelectedUser={setSelectedUser}
                 />
+                <div className="chat-right">
 
+                    <div className="search-box">
+                        <input
+                            type="text"
+                            placeholder="🔍 Search messages..."
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
+                    <div className="messages">
 
-                <div className="messages">
-                    {chatLoading ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                height: "100%",
-                                fontSize: "20px",
-                                color: "#666",
-                                fontWeight: "600",
-                            }}
-                        >
-                            Loading chat...
-                        </div>
-                    ) : !selectedUser ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                height: "100%",
-                                color: "#666",
-                                fontSize: "20px",
-                                fontWeight: "600",
-                            }}
-                        >
-                            Select a user to start chatting 💬
-                        </div>
-                    ) :
-
-                        messages.map((msg) => (
-
+                        {chatLoading ? (
                             <div
-                                key={msg.id}
-                                className={
-                                    msg.uid === auth.currentUser.uid
-                                        ? "message own"
-                                        : "message"
-                                }
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    height: "100%",
+                                    fontSize: "20px",
+                                    color: "#666",
+                                    fontWeight: "600",
+                                }}
                             >
-
-                                <img
-                                    src={msg.photo}
-                                    alt="profile"
-                                    className="avatar"
-                                />
-
-                                <div className="bubble">
-
-                                    <h4>{msg.name}</h4>
-
-                                    {msg.text && (
-                                        <p>{msg.text}</p>
-                                    )}
-                                    <p className="message-time">
-                                        {msg.createdAt?.toDate
-                                            ? msg.createdAt.toDate().toLocaleTimeString([], {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })
-                                            : ""}
-                                    </p>
-
-                                    {msg.image && (
-                                        <img
-                                            src={msg.image}
-                                            alt="chat"
-                                            className="chat-image"
-                                        />
-                                    )}
-                                    {msg.uid === auth.currentUser.uid && (
-                                        <>
-                                            <button
-                                                className="edit-btn"
-                                                onClick={() => {
-                                                    setEditingId(msg.id);
-                                                    setEditText(msg.text);
-                                                }}
-                                            >
-                                                ✏️ Edit
-                                            </button>
-
-                                            <button
-                                                className="delete-btn"
-                                                onClick={() => deleteMessage(msg.id)}
-                                            >
-                                                🗑 Delete
-                                            </button>
-                                        </>
-                                    )}
-
-                                </div>
-
+                                Loading chat...
                             </div>
+                        ) : !selectedUser ? (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    height: "100%",
+                                    color: "#666",
+                                    fontSize: "20px",
+                                    fontWeight: "600",
+                                }}
+                            >
+                                Select a user to start chatting 💬
+                            </div>
+                        ) :
 
-                        ))
-                    }
-                    < div ref={messagesEndRef}></div>
-                </div> {/* messages */}
+                            messages
+                                .filter((msg) =>
+                                    msg.text?.toLowerCase().includes(searchText.toLowerCase())
+                                )
+                                .map((msg) => (
+
+                                    <div
+                                        key={msg.id}
+                                        className={
+                                            msg.uid === auth.currentUser.uid
+                                                ? "message own"
+                                                : "message"
+                                        }
+                                    >
+
+                                        <img
+                                            src={msg.photo}
+                                            alt="profile"
+                                            className="avatar"
+                                        />
+
+                                        <div className="bubble">
+
+                                            <h4>{msg.name}</h4>
+
+                                            {msg.text && (
+                                                <p>{msg.text}</p>
+                                            )}
+                                            <p className="message-time">
+                                                {msg.createdAt?.toDate
+                                                    ? msg.createdAt.toDate().toLocaleTimeString([], {
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })
+                                                    : ""}
+                                            </p>
+
+                                            {msg.image && (
+                                                <img
+                                                    src={msg.image}
+                                                    alt="chat"
+                                                    className="chat-image"
+                                                />
+                                            )}
+                                            {msg.uid === auth.currentUser.uid && (
+                                                <>
+                                                    <button
+                                                        className="edit-btn"
+                                                        onClick={() => {
+                                                            setEditingId(msg.id);
+                                                            setEditText(msg.text);
+                                                        }}
+                                                    >
+                                                        ✏️ Edit
+                                                    </button>
+
+                                                    <button
+                                                        className="delete-btn"
+                                                        onClick={() => deleteMessage(msg.id)}
+                                                    >
+                                                        🗑 Delete
+                                                    </button>
+                                                </>
+                                            )}
+
+                                        </div>
+
+                                    </div>
+
+                                ))
+                        }
+                        <div ref={messagesEndRef}></div>
+                    </div> {/* messages */}
+
+                </div> {/* chat-right */}
 
             </div> {/* chat-body */}
 
