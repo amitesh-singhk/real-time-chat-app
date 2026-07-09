@@ -1,7 +1,7 @@
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 function Login() {
     const navigate = useNavigate();
@@ -24,7 +24,7 @@ function Login() {
                     photo: user.photoURL,
                     online: true,
                     typing: false,
-                    lastSeen: new Date(),
+                    lastSeen: serverTimestamp(),
                     createdAt: new Date(),
                 },
                 { merge: true }

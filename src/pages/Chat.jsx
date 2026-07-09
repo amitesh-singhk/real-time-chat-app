@@ -5,9 +5,16 @@ import ChatHeader from "../components/ChatHeader";
 import { Smile } from "lucide-react";
 import ImagePreview from "../components/ImagePreview";
 import { useState, useEffect, useRef } from "react";
-import { db, auth } from "../firebase";
+import { db, auth, rtdb } from "../firebase";
 import { Navigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+
+import {
+    ref,
+    onDisconnect,
+    onValue,
+    set,
+} from "firebase/database";
 
 import {
     collection,
@@ -50,6 +57,7 @@ function Chat() {
         if (!auth.currentUser) return;
 
         const userRef = doc(db, "users", auth.currentUser.uid);
+        const statusRef = ref(rtdb, "status/" + auth.currentUser.uid);
 
         setDoc(
             userRef,
@@ -61,6 +69,13 @@ function Chat() {
             },
             { merge: true }
         );
+        set(statusRef, {
+            online: true,
+        });
+
+        onDisconnect(statusRef).set({
+            online: false,
+        });
 
         return () => {
             setDoc(
@@ -128,6 +143,27 @@ function Chat() {
 
         return () => unsubscribe();
     }, []);
+
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const statusRef = ref(rtdb, "status/" + auth.currentUser.uid);
+
+        const unsubscribe = onValue(statusRef, async (snapshot) => {
+            const data = snapshot.val();
+
+            await setDoc(
+                doc(db, "users", auth.currentUser.uid),
+                {
+                    online: data?.online || false,
+                },
+                { merge: true }
+            );
+        });
+
+        return () => unsubscribe();
+    }, []);
+
     useEffect(() => {
         if (!auth.currentUser) return;
 
@@ -143,6 +179,25 @@ function Chat() {
         });
 
         return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        const uid = auth.currentUser.uid;
+
+        const userStatusRef = ref(rtdb, "status/" + uid);
+
+        // User online
+        set(userStatusRef, {
+            online: true,
+        });
+
+        // Browser close / disconnect
+        onDisconnect(userStatusRef).set({
+            online: false,
+        });
+
     }, []);
 
     if (!auth.currentUser) {
@@ -255,6 +310,7 @@ function Chat() {
         }
     };
     const logout = async () => {
+
         await setDoc(
             doc(db, "users", auth.currentUser.uid),
             {
