@@ -100,13 +100,30 @@ function Chat() {
             orderBy("createdAt", "asc")
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setMessages(
-                snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }))
-            );
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+
+            const msgs = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            setMessages(msgs);
+
+            // Mark messages as seen
+            for (const msg of msgs) {
+                if (
+                    msg.receiverId === auth.currentUser.uid &&
+                    msg.senderId !== auth.currentUser.uid &&
+                    msg.seen === false
+                ) {
+                    await updateDoc(
+                        doc(db, "chats", chatId, "messages", msg.id),
+                        {
+                            seen: true,
+                        }
+                    );
+                }
+            }
 
             setChatLoading(false);
         });
@@ -247,6 +264,7 @@ function Chat() {
         setLoading(true);
 
         try {
+            console.log("Chat ID =", chatId);
             let imageUrl = "";
 
             if (image) {
@@ -275,7 +293,9 @@ function Chat() {
                 senderId: auth.currentUser.uid,
                 receiverId: selectedUser.uid,
                 createdAt: serverTimestamp(),
+                seen: false,
             });
+            console.log("Message Saved Successfully");
 
             setMessage("");
             setImage(null);
@@ -411,14 +431,24 @@ function Chat() {
                                             {msg.text && (
                                                 <p>{msg.text}</p>
                                             )}
-                                            <p className="message-time">
-                                                {msg.createdAt?.toDate
-                                                    ? msg.createdAt.toDate().toLocaleTimeString([], {
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                    })
-                                                    : ""}
-                                            </p>
+                                            <div className="message-meta">
+
+                                                <span className="message-time">
+                                                    {msg.createdAt?.toDate
+                                                        ? msg.createdAt.toDate().toLocaleTimeString([], {
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        })
+                                                        : ""}
+                                                </span>
+
+                                                {msg.uid === auth.currentUser.uid && (
+                                                    <span className="seen-status">
+                                                        {msg.seen ? "✓✓ Seen" : "✓ Sent"}
+                                                    </span>
+                                                )}
+
+                                            </div>
 
                                             {msg.image && (
                                                 <img
