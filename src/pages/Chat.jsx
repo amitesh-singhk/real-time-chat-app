@@ -49,8 +49,13 @@ function Chat() {
             ? [auth.currentUser.uid, selectedUser.uid].sort().join("_")
             : null;
 
+
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState("");
+
+    const [replyMessage, setReplyMessage] = useState(null);
+
+
 
     const messagesEndRef = useRef(null);
     useEffect(() => {
@@ -294,7 +299,16 @@ function Chat() {
                 receiverId: selectedUser.uid,
                 createdAt: serverTimestamp(),
                 seen: false,
+                replyTo: replyMessage
+                    ? {
+                        text: replyMessage.text,
+                        name: replyMessage.name,
+                        uid: replyMessage.uid,
+                    }
+                    : null,
+
             });
+            setReplyMessage(null);
             console.log("Message Saved Successfully");
 
             setMessage("");
@@ -460,6 +474,12 @@ function Chat() {
                                             {msg.uid === auth.currentUser.uid && (
                                                 <>
                                                     <button
+                                                        className="reply-btn"
+                                                        onClick={() => setReplyMessage(msg)}
+                                                    >
+                                                        ↩ Reply
+                                                    </button>
+                                                    <button
                                                         className="edit-btn"
                                                         onClick={() => {
                                                             setEditingId(msg.id);
@@ -499,6 +519,20 @@ function Chat() {
                     />
                 )
             }
+            {replyMessage && (
+                <div className="reply-preview">
+                    <strong>Replying to {replyMessage.name}</strong>
+
+                    <p>{replyMessage.text}</p>
+
+                    <button
+                        className="close-reply"
+                        onClick={() => setReplyMessage(null)}
+                    >
+                        ✖
+                    </button>
+                </div>
+            )}
 
             <div className="chat-input">
 
