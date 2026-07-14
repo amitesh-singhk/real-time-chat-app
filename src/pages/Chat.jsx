@@ -54,6 +54,9 @@ function Chat() {
     const [editText, setEditText] = useState("");
 
     const [replyMessage, setReplyMessage] = useState(null);
+    const [reactionMessageId, setReactionMessageId] = useState(null);
+
+    const reactions = ["👍", "❤️", "😂", "😮", "😢"];
 
 
 
@@ -327,6 +330,20 @@ function Chat() {
             setLoading(false);
         }
     };
+    const addReaction = async (messageId, emoji) => {
+        try {
+            await updateDoc(
+                doc(db, "chats", chatId, "messages", messageId),
+                {
+                    reaction: emoji,
+                }
+            );
+
+            setReactionMessageId(null);
+        } catch (error) {
+            console.error(error);
+        }
+    };
     const deleteMessage = async (id) => {
         const confirmDelete = window.confirm(
             "Are you sure you want to delete this message?"
@@ -441,6 +458,12 @@ function Chat() {
                                         <div className="bubble">
 
                                             <h4>{msg.name}</h4>
+                                            {msg.replyTo && (
+                                                <div className="reply-box">
+                                                    <strong>{msg.replyTo.name}</strong>
+                                                    <p>{msg.replyTo.text}</p>
+                                                </div>
+                                            )}
 
                                             {msg.text && (
                                                 <p>{msg.text}</p>
@@ -471,6 +494,13 @@ function Chat() {
                                                     className="chat-image"
                                                 />
                                             )}
+
+                                            {msg.reaction && (
+                                                <div className="message-reaction">
+                                                    {msg.reaction}
+                                                </div>
+                                            )}
+
                                             {msg.uid === auth.currentUser.uid && (
                                                 <>
                                                     <button
@@ -479,6 +509,18 @@ function Chat() {
                                                     >
                                                         ↩ Reply
                                                     </button>
+
+                                                    <button
+                                                        className="reaction-btn"
+                                                        onClick={() =>
+                                                            setReactionMessageId(
+                                                                reactionMessageId === msg.id ? null : msg.id
+                                                            )
+                                                        }
+                                                    >
+                                                        😀 React
+                                                    </button>
+
                                                     <button
                                                         className="edit-btn"
                                                         onClick={() => {
@@ -496,6 +538,20 @@ function Chat() {
                                                         🗑 Delete
                                                     </button>
                                                 </>
+                                            )}
+
+                                            {reactionMessageId === msg.id && (
+                                                <div className="reaction-picker">
+                                                    {["👍", "❤️", "😂", "😮", "😢"].map((emoji) => (
+                                                        <span
+                                                            key={emoji}
+                                                            className="emoji"
+                                                            onClick={() => addReaction(msg.id, emoji)}
+                                                        >
+                                                            {emoji}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             )}
 
                                         </div>
