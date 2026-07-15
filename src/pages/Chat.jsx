@@ -55,6 +55,7 @@ function Chat() {
 
     const [replyMessage, setReplyMessage] = useState(null);
     const [reactionMessageId, setReactionMessageId] = useState(null);
+    const [shouldScroll, setShouldScroll] = useState(false);
 
     const reactions = ["👍", "❤️", "😂", "😮", "😢"];
 
@@ -140,10 +141,14 @@ function Chat() {
     }, [chatId]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth",
-        });
-    }, [messages]);
+        if (shouldScroll) {
+            messagesEndRef.current?.scrollIntoView({
+                behavior: "smooth",
+            });
+
+            setShouldScroll(false);
+        }
+    }, [messages, shouldScroll]);
     useEffect(() => {
         if (!auth.currentUser) return;
 
@@ -312,6 +317,7 @@ function Chat() {
 
             });
             setReplyMessage(null);
+            setShouldScroll(true);
             console.log("Message Saved Successfully");
 
             setMessage("");
@@ -501,25 +507,27 @@ function Chat() {
                                                 </div>
                                             )}
 
+                                            <button
+                                                className="reply-btn"
+                                                onClick={() => setReplyMessage(msg)}
+                                            >
+                                                ↩ Reply
+                                            </button>
+
+                                            <button
+                                                className="reaction-btn"
+                                                onClick={() =>
+                                                    setReactionMessageId(
+                                                        reactionMessageId === msg.id ? null : msg.id
+                                                    )
+                                                }
+                                            >
+                                                😀 React
+                                            </button>
+
                                             {msg.uid === auth.currentUser.uid && (
                                                 <>
-                                                    <button
-                                                        className="reply-btn"
-                                                        onClick={() => setReplyMessage(msg)}
-                                                    >
-                                                        ↩ Reply
-                                                    </button>
 
-                                                    <button
-                                                        className="reaction-btn"
-                                                        onClick={() =>
-                                                            setReactionMessageId(
-                                                                reactionMessageId === msg.id ? null : msg.id
-                                                            )
-                                                        }
-                                                    >
-                                                        😀 React
-                                                    </button>
 
                                                     <button
                                                         className="edit-btn"
