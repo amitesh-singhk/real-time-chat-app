@@ -205,6 +205,11 @@ function Chat() {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const allUsers = snapshot.docs.map((doc) => doc.data());
 
+            allUsers.sort((a, b) => {
+                if (a.pinned === b.pinned) return 0;
+                return a.pinned ? -1 : 1;
+            });
+
             setUsers(allUsers);
         });
 
