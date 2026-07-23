@@ -1,3 +1,4 @@
+
 import { Oval } from "react-loader-spinner";
 import UserList from "../components/UserList";
 import EmojiPicker from "emoji-picker-react";
@@ -33,9 +34,17 @@ import {
 import "../styles/Chat.css";
 
 function Chat() {
+    const [audioReady, setAudioReady] = useState(false);
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [image, setImage] = useState(null);
+    const [recording, setRecording] = useState(false);
+
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+
+    const [audioChunks, setAudioChunks] = useState([]);
+
+    const [audioBlob, setAudioBlob] = useState(null);
     const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(false);
     const [chatLoading, setChatLoading] = useState(true);
@@ -273,8 +282,53 @@ function Chat() {
             { merge: true }
         );
     };
+
+    const startRecording = async () => {
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+
+            const recorder = new MediaRecorder(stream);
+
+            const chunks = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, {
+                    type: "audio/webm",
+                });
+
+                setAudioBlob(blob);
+                setAudioReady(true);
+
+                console.log("Blob created:", blob);
+                console.log("Blob size:", blob.size);
+            };
+
+            recorder.start();
+
+            setMediaRecorder(recorder);
+            setRecording(true);
+        } catch (err) {
+            console.error(err);
+            alert("Microphone permission denied!");
+        }
+    };
+    const stopRecording = () => {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            setRecording(false);
+        }
+    };
     const sendMessage = async () => {
-        if (message.trim() === "" && !image) return;
+        if (message.trim() === "" && !image && !audioBlob) return;
         if (!selectedUser) {
             alert("Please select a user first.");
             return;
@@ -284,6 +338,7 @@ function Chat() {
         try {
             console.log("Chat ID =", chatId);
             let imageUrl = "";
+            let audioUrl = "";
 
             if (image) {
                 const data = new FormData();
@@ -301,10 +356,30 @@ function Chat() {
                 const file = await res.json();
                 imageUrl = file.secure_url;
             }
+            console.log("Audio Blob:", audioBlob);
+            console.log("Audio Blob Size:", audioBlob?.size);
+            if (audioBlob) {
+                const data = new FormData();
 
+                data.append("file", audioBlob);
+                data.append("upload_preset", "chat_upload");
+
+                const res = await fetch(
+                    "https://api.cloudinary.com/v1_1/tdlhklkz/video/upload",
+                    {
+                        method: "POST",
+                        body: data,
+                    }
+                );
+
+                const file = await res.json();
+                audioUrl = file.secure_url;
+                console.log("Audio URL:", audioUrl);
+            }
             await addDoc(collection(db, "chats", chatId, "messages"), {
                 text: message,
                 image: imageUrl,
+                audio: audioUrl,
                 uid: auth.currentUser.uid,
                 name: auth.currentUser.displayName,
                 photo: auth.currentUser.photoURL,
@@ -327,6 +402,10 @@ function Chat() {
 
             setMessage("");
             setImage(null);
+            setAudioBlob(null);
+            setRecording(false);
+            setMediaRecorder(null);
+            setAudioReady(false);
             await setDoc(
                 doc(db, "users", auth.currentUser.uid),
                 {
@@ -505,6 +584,12 @@ function Chat() {
                                                     className="chat-image"
                                                 />
                                             )}
+                                            {msg.audio && (
+                                                <audio controls className="chat-audio">
+                                                    <source src={msg.audio} type="audio/webm" />
+                                                    Your browser does not support audio.
+                                                </audio>
+                                            )}
 
                                             {msg.reaction && (
                                                 <div className="message-reaction">
@@ -657,7 +742,33 @@ function Chat() {
                 </label>
 
                 <button
+                    className="mic-btn"
+                    onClick={recording ? stopRecording : startRecording}
+                >
+                    {recording ? "⏹️" : "🎤"}
+                </button>
+                {recording && (
+                    <div className="recording-status">
+                        🔴 Recording...
+                    </div>
+                )}
 
+                {audioReady && !recording && (
+                    <div className="recording-status ready">
+                        ✅ Voice Recorded
+
+                        <button
+                            className="delete-audio-btn"
+                            onClick={() => {
+                                setAudioBlob(null);
+                                setAudioReady(false);
+                            }}
+                        >
+                            🗑 Delete
+                        </button>
+                    </div>
+                )}
+                <button
                     onClick={editingId ? updateMessage : sendMessage}
                     disabled={loading}
                 >
@@ -667,6 +778,7 @@ function Chat() {
                             ? "Uploading..."
                             : "Send"}
                 </button>
+
                 {editingId && (
                     <button
                         className="cancel-btn"
@@ -684,5 +796,4 @@ function Chat() {
         </div >
     );
 }
-
 export default Chat;

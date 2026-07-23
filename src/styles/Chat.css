@@ -616,3 +616,44 @@ npm .seen-status {
     margin-left: 6px;
     font-size: 14px;
 }
+
+.mic-btn {
+    background: #22c55e;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.2s;
+}
+
+.mic-btn:hover {
+    transform: scale(1.08);
+}
+.recording-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    color: red;
+    font-weight: 600;
+}
+
+.recording-status.ready {
+    color: green;
+}
+
+.delete-audio-btn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.delete-audio-btn:hover {
+    background: #d9363e;
+}
