@@ -673,3 +673,46 @@ npm .seen-status {
 .delete-audio-btn:hover {
     background: #d9363e;
 }
+
+.forward-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.forward-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.forward-user {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #f3f4f6;
+    text-align: left;
+}
+
+.forward-user:hover {
+    background: #e5e7eb;
+}
+
+.close-forward {
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #ef4444;
+    color: white;
+}

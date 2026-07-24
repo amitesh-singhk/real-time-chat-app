@@ -700,6 +700,33 @@ function Chat() {
                 </div>
             )}
 
+            {showForwardModal && (
+                <div className="forward-modal">
+                    <div className="forward-box">
+                        <h3>📤 Forward Message</h3>
+
+                        {users.map((user) => (
+                            <button
+                                key={user.uid}
+                                className="forward-user"
+                                onClick={() => {
+                                    console.log("Forward to:", user.name);
+                                }}
+                            >
+                                {user.name}
+                            </button>
+                        ))}
+
+                        <button
+                            className="close-forward"
+                            onClick={() => setShowForwardModal(false)}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="chat-input">
 
                 <input
