@@ -503,6 +503,21 @@ npm .seen-status {
     font-size: 12px;
 }
 
+.forward-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: 0.2s;
+}
+
+.forward-btn:hover {
+    background: #2563eb;
+}
+
 .reaction-btn:hover {
     background: #d97706;
 }
@@ -632,6 +647,7 @@ npm .seen-status {
 .mic-btn:hover {
     transform: scale(1.08);
 }
+
 .recording-status {
     display: flex;
     align-items: center;

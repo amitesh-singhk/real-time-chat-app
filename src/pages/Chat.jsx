@@ -63,6 +63,9 @@ function Chat() {
     const [editText, setEditText] = useState("");
 
     const [replyMessage, setReplyMessage] = useState(null);
+    const [forwardMessage, setForwardMessage] = useState(null);
+    const [showForwardModal, setShowForwardModal] = useState(false);
+
     const [reactionMessageId, setReactionMessageId] = useState(null);
     const [shouldScroll, setShouldScroll] = useState(false);
 
@@ -613,6 +616,15 @@ function Chat() {
                                                 }
                                             >
                                                 😀 React
+                                            </button>
+                                            <button
+                                                className="forward-btn"
+                                                onClick={() => {
+                                                    setForwardMessage(msg);
+                                                    setShowForwardModal(true);
+                                                }}
+                                            >
+                                                📤 Forward
                                             </button>
 
                                             {msg.uid === auth.currentUser.uid && (
