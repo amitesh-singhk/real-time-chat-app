@@ -453,6 +453,45 @@ function Chat() {
             alert("Failed to delete message.");
         }
     };
+    const forwardToUser = async (user) => {
+        if (!forwardMessage) return;
+
+        try {
+            const forwardChatId = [auth.currentUser.uid, user.uid]
+                .sort()
+                .join("_");
+
+            await addDoc(
+                collection(db, "chats", forwardChatId, "messages"),
+                {
+                    text: forwardMessage.text || "",
+                    image: forwardMessage.image || "",
+                    audio: forwardMessage.audio || "",
+
+                    uid: auth.currentUser.uid,
+                    name: auth.currentUser.displayName,
+                    photo: auth.currentUser.photoURL,
+
+                    senderId: auth.currentUser.uid,
+                    receiverId: user.uid,
+
+                    createdAt: serverTimestamp(),
+                    seen: false,
+
+                    forwarded: true,
+                }
+            );
+
+            alert("✅ Message Forwarded");
+
+            setShowForwardModal(false);
+            setForwardMessage(null);
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to forward message");
+        }
+    };
     const logout = async () => {
 
         await setDoc(
@@ -710,7 +749,7 @@ function Chat() {
                                 key={user.uid}
                                 className="forward-user"
                                 onClick={() => {
-                                    console.log("Forward to:", user.name);
+                                    forwardToUser(user);
                                 }}
                             >
                                 {user.name}
