@@ -716,3 +716,16 @@ npm .seen-status {
     background: #ef4444;
     color: white;
 }
+
+.forwarded-label {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+.deleted-message {
+    color: #777;
+    font-style: italic;
+    padding: 6px 0;
+}

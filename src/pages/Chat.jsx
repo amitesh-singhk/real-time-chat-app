@@ -438,16 +438,33 @@ function Chat() {
         }
     };
     const deleteMessage = async (id) => {
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this message?"
+        const choice = window.prompt(
+            `Type:
+            
+1 = Delete for Me
+2 = Delete for Everyone`
         );
 
-        if (!confirmDelete) return;
+        if (!choice) return;
 
         try {
-            await deleteDoc(
-                doc(db, "chats", chatId, "messages", id)
-            );
+            if (choice === "1") {
+                await deleteDoc(doc(db, "chats", chatId, "messages", id));
+            }
+
+            if (choice === "2") {
+                await updateDoc(
+                    doc(db, "chats", chatId, "messages", id),
+                    {
+                        deletedForEveryone: true,
+                        text: "",
+                        image: "",
+                        audio: "",
+                    }
+                );
+            }
+
+
         } catch (error) {
             console.error(error);
             alert("Failed to delete message.");
@@ -596,8 +613,17 @@ function Chat() {
                                                     <p>{msg.replyTo.text}</p>
                                                 </div>
                                             )}
-
-                                            {msg.text && (
+                                            {msg.forwarded && (
+                                                <div className="forwarded-label">
+                                                    📤 Forwarded
+                                                </div>
+                                            )}
+                                            {msg.deletedForEveryone && (
+                                                <div className="deleted-message">
+                                                    🚫 This message was deleted
+                                                </div>
+                                            )}
+                                            {!msg.deletedForEveryone && msg.text && (
                                                 <p>{msg.text}</p>
                                             )}
                                             <div className="message-meta">
@@ -619,7 +645,7 @@ function Chat() {
 
                                             </div>
 
-                                            {msg.image && (
+                                            {!msg.deletedForEveryone && msg.image && (
                                                 <img
                                                     src={msg.image}
                                                     alt="chat"
