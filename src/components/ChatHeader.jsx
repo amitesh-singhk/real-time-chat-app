@@ -7,6 +7,8 @@ function ChatHeader({
   onLogout,
   typingUser,
   isTyping,
+  darkMode,
+  setDarkMode,
 }) {
   const [userStatus, setUserStatus] = useState(null);
 
@@ -86,7 +88,12 @@ function ChatHeader({
           </p>
         </div>
       </div>
-
+      <button
+        className="theme-btn"
+        onClick={() => setDarkMode(!darkMode)}
+      >
+        {darkMode ? "☀️ Light" : "🌙 Dark"}
+      </button>
       <button className="logout-btn" onClick={onLogout}>
         Logout
       </button>

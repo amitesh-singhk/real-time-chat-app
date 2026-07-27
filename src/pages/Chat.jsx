@@ -68,8 +68,12 @@ function Chat() {
 
     const [reactionMessageId, setReactionMessageId] = useState(null);
     const [shouldScroll, setShouldScroll] = useState(false);
+    const [darkMode, setDarkMode] = useState(
+        localStorage.getItem("theme") === "dark"
+    );
 
     const reactions = ["👍", "❤️", "😂", "😮", "😢"];
+
 
 
 
@@ -246,6 +250,16 @@ function Chat() {
         });
 
     }, []);
+
+    useEffect(() => {
+        if (darkMode) {
+            document.body.classList.add("dark-mode");
+            localStorage.setItem("theme", "dark");
+        } else {
+            document.body.classList.remove("dark-mode");
+            localStorage.setItem("theme", "light");
+        }
+    }, [darkMode]);
 
     if (!auth.currentUser) {
         return <Navigate to="/" />;
@@ -527,11 +541,12 @@ function Chat() {
     return (
         <div className="chat-container">
             <ChatHeader
-
                 user={auth.currentUser}
                 onLogout={logout}
                 typingUser={typingUser}
                 isTyping={isTyping}
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
             />
 
             <div className="chat-body">
