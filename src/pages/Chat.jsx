@@ -78,6 +78,7 @@ function Chat() {
 
 
     const messagesEndRef = useRef(null);
+
     useEffect(() => {
         if (!auth.currentUser) return;
 
@@ -134,11 +135,12 @@ function Chat() {
 
             setMessages(msgs);
 
+
             // Mark messages as seen
             for (const msg of msgs) {
                 if (
                     msg.receiverId === auth.currentUser.uid &&
-                    msg.senderId !== auth.currentUser.uid &&
+                    msg.senderId !== auth.currentUser.uid && 
                     msg.seen === false
                 ) {
                     await updateDoc(
