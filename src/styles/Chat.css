@@ -729,3 +729,67 @@ npm .seen-status {
     font-style: italic;
     padding: 6px 0;
 }
+
+/* ================= DARK MODE ================= */
+
+body.dark-mode {
+    background: #121212;
+    color: #ffffff;
+}
+
+body.dark-mode .chat-container {
+    background: #181818;
+}
+
+body.dark-mode .chat-header {
+    background: #202c33;
+}
+
+body.dark-mode .chat-body {
+    background: #111b21;
+}
+
+body.dark-mode .messages {
+    background: #0b141a;
+}
+
+body.dark-mode .message {
+    background: #202c33;
+    color: white;
+}
+
+body.dark-mode .message.own {
+    background: #005c4b;
+    color: white;
+}
+
+body.dark-mode input {
+    background: #2a3942;
+    color: white;
+    border: 1px solid #3c4d57;
+}
+
+body.dark-mode .search-box input {
+    background: #2a3942;
+    color: white;
+}
+
+body.dark-mode .reply-preview {
+    background: #202c33;
+    color: white;
+}
+
+.theme-btn {
+    margin-right: 10px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #444;
+    color: white;
+    font-weight: bold;
+}
+
+.theme-btn:hover {
+    opacity: .9;
+}
