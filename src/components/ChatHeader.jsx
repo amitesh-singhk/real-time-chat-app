@@ -88,15 +88,24 @@ function ChatHeader({
           </p>
         </div>
       </div>
-      <button
-        className="theme-btn"
-        onClick={() => setDarkMode(!darkMode)}
-      >
-        {darkMode ? "☀️ Light" : "🌙 Dark"}
-      </button>
-      <button className="logout-btn" onClick={onLogout}>
-        Logout
-      </button>
+
+      <div className="header-actions">
+
+        <button
+          className="theme-btn"
+          onClick={() => setDarkMode(!darkMode)}
+        >
+          {darkMode ? "☀️ Light" : "🌙 Dark"}
+        </button>
+
+        <button
+          className="logout-btn"
+          onClick={onLogout}
+        >
+          Logout
+        </button>
+
+      </div>
     </div>
   );
 }
