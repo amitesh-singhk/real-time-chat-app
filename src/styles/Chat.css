@@ -908,6 +908,8 @@ body.dark-mode .reply-preview {
 
     .status {
         font-size: 12px;
+        color: #4caf50;
+        font-weight: 500;
     }
 
     .header-actions {
@@ -956,6 +958,10 @@ body.dark-mode .reply-preview {
     .bubble {
         max-width: 90%;
         word-wrap: break-word;
+        border-radius: 18px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     }
 
     .chat-image {
