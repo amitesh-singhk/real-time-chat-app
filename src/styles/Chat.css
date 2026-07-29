@@ -67,7 +67,7 @@ body {
     min-width: 0;
 }
 
-
+n
 /* HEADER */
 
 .chat-header {
@@ -554,33 +554,39 @@ npm .seen-status {
     background: #3b82f6;
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-right: 5px;
-    font-size: 12px;
+    margin-right: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.25s ease;
 }
 
 .reaction-btn {
     background: #f59e0b;
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-right: 5px;
-    font-size: 12px;
+    margin-right: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.25s ease;
 }
 
 .forward-btn {
     background: #3b82f6;
     color: white;
     border: none;
-    border-radius: 6px;
-    padding: 5px 10px;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
     margin-left: 6px;
-    transition: 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.25s ease;
 }
 
 .forward-btn:hover {
