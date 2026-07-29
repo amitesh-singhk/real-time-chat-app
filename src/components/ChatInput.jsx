@@ -20,7 +20,6 @@ function ChatInput({
                     }
                 }}
             />
-
             <input
                 type="file"
                 accept="image/*"
@@ -34,5 +33,4 @@ function ChatInput({
         </div>
     );
 }
-
 export default ChatInput;
