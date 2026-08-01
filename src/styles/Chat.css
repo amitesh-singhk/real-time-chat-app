@@ -365,6 +365,31 @@ n
     overflow: hidden;
 }
 
+.chat-body {
+    position: relative;
+}
+
+@media (max-width: 768px) {
+
+    .chat-body.show-chat .user-list {
+        display: none;
+    }
+
+    .chat-body.show-chat .chat-right {
+        display: flex;
+        width: 100%;
+    }
+
+    .chat-body:not(.show-chat) .chat-right {
+        display: none;
+    }
+
+    .chat-body:not(.show-chat) .user-list {
+        display: block;
+        width: 100%;
+    }
+}
+
 /* Delete Button */
 .delete-btn {
     display: none;

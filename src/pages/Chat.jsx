@@ -552,7 +552,7 @@ function Chat() {
                 setDarkMode={setDarkMode}
             />
 
-            <div className="chat-body">
+            <div className={`chat-body ${showChat ? "show-chat" : ""}`}>
 
                 <UserList
                     users={users}
