@@ -39,6 +39,7 @@ function Chat() {
     const [messages, setMessages] = useState([]);
     const [image, setImage] = useState(null);
     const [recording, setRecording] = useState(false);
+    const [showChat, setShowChat] = useState(false);
 
     const [mediaRecorder, setMediaRecorder] = useState(null);
 
@@ -140,7 +141,7 @@ function Chat() {
             for (const msg of msgs) {
                 if (
                     msg.receiverId === auth.currentUser.uid &&
-                    msg.senderId !== auth.currentUser.uid && 
+                    msg.senderId !== auth.currentUser.uid &&
                     msg.seen === false
                 ) {
                     await updateDoc(
@@ -556,7 +557,12 @@ function Chat() {
                 <UserList
                     users={users}
                     selectedUser={selectedUser}
-                    setSelectedUser={setSelectedUser}
+                    setSelectedUser={(user) => {
+                        setSelectedUser(user);
+                        if (window.innerWidth <= 768) {
+                            setShowChat(true);
+                        }
+                    }}
                 />
                 <div className="chat-right">
 
