@@ -550,6 +550,8 @@ function Chat() {
                 isTyping={isTyping}
                 darkMode={darkMode}
                 setDarkMode={setDarkMode}
+                showChat={showChat}
+                setShowChat={setShowChat}
             />
 
             <div className={`chat-body ${showChat ? "show-chat" : ""}`}>
